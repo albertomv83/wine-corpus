@@ -125,6 +125,7 @@ public class WineNameMatchCreater {
     private void writeValue(final WineMatch wine, final FileWriter fw) {
         try {
             fw.write(om.writeValueAsString(wine) + "\r\n");
+            fw.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -156,6 +157,7 @@ public class WineNameMatchCreater {
             name = name.replace(",", "");
             System.out.println(name);
             String[] nameSplits = name.split(" ");
+            // create simple matches
             List<String> goodMatches = new ArrayList<String>();
             for (String match : nameSplits) {
                 if (!exclude.contains(match)) {
@@ -165,12 +167,39 @@ public class WineNameMatchCreater {
                 }
             }
             wm.setMatches(goodMatches);
+            // create concatenated matches
+            // for (int i = 2; i <= goodMatches.size(); i++) {
+            List<String> partialResult =
+                    createConcatenatedMatches(2, goodMatches);
+            wm.getMatches().addAll(partialResult);
+            // }
 
             return wm;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * @param i
+     * @param goodMatches
+     * @return
+     */
+    private List<String> createConcatenatedMatches(final int groups,
+            final List<String> goodMatches) {
+        List<String> result = new ArrayList<String>();
+        int position = 0;
+        StringBuffer sb = new StringBuffer("");
+        while (position + groups <= goodMatches.size()) {
+            for (int i = 0; i <= groups - 1; i++) {
+                sb.append(goodMatches.get(position + i));
+            }
+            result.add(sb.toString());
+            sb.delete(0, sb.length());
+            position++;
+        }
+        return result;
     }
 
     public static void main(final String... args) throws Exception {
