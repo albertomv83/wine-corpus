@@ -22,124 +22,160 @@ import es.instavino.wine.db.model.WineNameReduced;
 
 public class WineNameMatchCreater {
 
-	private static List<String> exclude = Arrays.asList(new String[] { "bottle", "half", "375ml", "15l" });
-	private ObjectMapper om = new ObjectMapper();
-	private Set<String> matches = new TreeSet<String>();
-	private List<List<String>> pairMatches = new ArrayList<List<String>>();
+    private static List<String> exclude = Arrays.asList(new String[] {
+            "bottle", "half", "375ml", "15l" });
 
-	public void readAndCreateMatches(final String path) throws IOException {
+    private final ObjectMapper om = new ObjectMapper();
 
-		List<AppellationMatch> appellations = Files
-				.lines(Paths.get("C:\\Users\\albertomv\\Dropbox\\Master\\Proyecto\\appellations.json"),
-						Charset.forName("UTF-8"))
-				.map(line -> createAppellationMatch(line)).collect(Collectors.toList());
+    private final Set<String> matches = new TreeSet<String>();
 
-		List<GrapeMatch> grapes = Files
-				.lines(Paths.get("C:\\Users\\albertomv\\Dropbox\\Master\\Proyecto\\grapeTypes.json"),
-						Charset.forName("UTF-8"))
-				.map(line -> createGrapeMatch(line)).collect(Collectors.toList());
+    private final Set<List<String>> pairMatches =
+        new TreeSet<List<String>>((final List<String> l1,
+                final List<String> l2) -> {
+                        if (l1.size() != l2.size()) {
+                            return -1;
+                        } else {
+                            boolean equals = true;
+                            for (String term : l1) {
+                                equals = equals && l2.contains(term);
+                            }
+                            return equals ? 0 : -1;
+                        }
+                    });
 
-		appellations.stream().filter(appellation -> appellation.getMatches() != null)
-				.forEach(appellation -> matches.addAll(appellation.getMatches()));
+    public void readAndCreateMatches(final String path) throws IOException {
 
-		appellations.stream()
-		.filter(appellation -> appellation.getPairMatches() != null)
-		.forEach(appellation -> {
-			pairMatches.addAll(appellation.getPairMatches());
-			appellation.getPairMatches().forEach(sublist -> matches.addAll(sublist));
-		});
+        List<AppellationMatch> appellations =
+            Files
+                .lines(
+                    Paths
+                        .get("C:\\Users\\amancheno\\Dropbox\\Master\\Proyecto\\appellations.json"),
+                    Charset.forName("UTF-8"))
+                .map(line -> createAppellationMatch(line))
+                .collect(Collectors.toList());
 
-		grapes.stream().filter(grape -> grape.getMatches() != null)
-				.forEach(grape -> matches.addAll(grape.getMatches()));
+        List<GrapeMatch> grapes =
+            Files
+                .lines(
+                    Paths
+                        .get("C:\\Users\\amancheno\\Dropbox\\Master\\Proyecto\\grapeTypes.json"),
+                    Charset.forName("UTF-8"))
+                .map(line -> createGrapeMatch(line))
+                .collect(Collectors.toList());
 
-		grapes.stream().filter(grape -> grape.getPairMatches() != null)
-				.forEach(grape -> {
-					pairMatches.addAll(grape.getPairMatches());
-					grape.getPairMatches().forEach(sublist -> matches.addAll(sublist));
-				});
+        appellations
+            .stream()
+            .filter(appellation -> appellation.getMatches() != null)
+            .forEach(
+                appellation -> matches.addAll(appellation.getMatches()));
 
-		File result = new File(path + ".matched");
-		result.createNewFile();
-		FileWriter fw = new FileWriter(result);
+        appellations
+            .stream()
+            .filter(appellation -> appellation.getPairMatches() != null)
+            .forEach(
+                appellation -> {
+                    pairMatches.addAll(appellation.getPairMatches());
+                    appellation.getPairMatches().forEach(
+                        sublist -> matches.addAll(sublist));
+                });
 
-		Files.lines(Paths.get(path), Charset.forName("UTF-8")).map(line -> createMatches(line))
-				.collect(Collectors.toList()).forEach(wine -> writeValue(wine, fw));
+        grapes.stream().filter(grape -> grape.getMatches() != null)
+            .forEach(grape -> matches.addAll(grape.getMatches()));
 
-		fw.close();
-	}
+        grapes
+            .stream()
+            .filter(grape -> grape.getPairMatches() != null)
+            .forEach(
+                grape -> {
+                    pairMatches.addAll(grape.getPairMatches());
+                    grape.getPairMatches().forEach(
+                        sublist -> matches.addAll(sublist));
+                });
 
-	private AppellationMatch createAppellationMatch(String line) {
-		try {
-			// System.out.println(line);
-			return om.readValue(line, AppellationMatch.class);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+        File result = new File(path + ".matched");
+        result.createNewFile();
+        FileWriter fw = new FileWriter(result);
 
-	private GrapeMatch createGrapeMatch(String line) {
-		try {
-			return om.readValue(line, GrapeMatch.class);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+        Files.lines(Paths.get(path), Charset.forName("UTF-8"))
+            .map(line -> createMatches(line)).collect(Collectors.toList())
+            .forEach(wine -> writeValue(wine, fw));
 
-	private void writeValue(WineMatch wine, FileWriter fw) {
-		try {
-			fw.write(om.writeValueAsString(wine) + "\r\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+        fw.close();
+    }
 
-	private WineMatch createMatches(String line) {
-		try {
-			WineNameReduced wine = om.readValue(line, WineNameReduced.class);
-			WineMatch wm = new WineMatch();
-			wm.setList(wine.getList());
-			wm.setName(wine.getName());
-			String name = wine.getName().trim().toLowerCase();
-			name = name.replace(")", "");
-			name = name.replace("(", "");
-			name = name.replace("?", "");
-			name = name.replace("¿", "");
-			name = name.replace("!", "");
-			name = name.replace("!", "");
-			name = name.replace("' ", " ");
-			name = name.replace(" '", " ");
-			name = name.replace("'", " ");
-			name = name.replace("- ", " ");
-			name = name.replace(" -", " ");
-			name = name.replace("-", " ");
-			name = name.replace("\\", "");
-			name = name.replace("/", "");
-			name = name.replace(".", "");
-			name = name.replace(",", "");
-			System.out.println(name);
-			String[] nameSplits = name.split(" ");
-			List<String> goodMatches = new ArrayList<String>();
-			for (String match : nameSplits) {
-				if (!exclude.contains(match)) {
-					if (!matches.contains(match)) {
-						goodMatches.add(match);
-					}
-				}
-			}
-			wm.setMatches(goodMatches);
+    private AppellationMatch createAppellationMatch(final String line) {
+        try {
+            // System.out.println(line);
+            return om.readValue(line, AppellationMatch.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-			return wm;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+    private GrapeMatch createGrapeMatch(final String line) {
+        try {
+            return om.readValue(line, GrapeMatch.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-	public static void main(final String... args) throws Exception {
-		WineNameMatchCreater wnr = new WineNameMatchCreater();
-		wnr.readAndCreateMatches("C:\\Users\\albertomv\\Dropbox\\Master\\Proyecto\\wineNames.json.reduced");
-	}
+    private void writeValue(final WineMatch wine, final FileWriter fw) {
+        try {
+            fw.write(om.writeValueAsString(wine) + "\r\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private WineMatch createMatches(final String line) {
+        try {
+            WineNameReduced wine =
+                om.readValue(line, WineNameReduced.class);
+            WineMatch wm = new WineMatch();
+            wm.setList(wine.getList());
+            wm.setName(wine.getName());
+            String name = wine.getName().trim().toLowerCase();
+            name = name.replace(")", "");
+            name = name.replace("(", "");
+            name = name.replace("?", "");
+            name = name.replace("Â¿", "");
+            name = name.replace("!", "");
+            name = name.replace("!", "");
+            name = name.replace("' ", " ");
+            name = name.replace(" '", " ");
+            name = name.replace("'", " ");
+            name = name.replace("- ", " ");
+            name = name.replace(" -", " ");
+            name = name.replace("-", " ");
+            name = name.replace("\\", "");
+            name = name.replace("/", "");
+            name = name.replace(".", "");
+            name = name.replace(",", "");
+            System.out.println(name);
+            String[] nameSplits = name.split(" ");
+            List<String> goodMatches = new ArrayList<String>();
+            for (String match : nameSplits) {
+                if (!exclude.contains(match)) {
+                    if (!matches.contains(match)) {
+                        goodMatches.add(match);
+                    }
+                }
+            }
+            wm.setMatches(goodMatches);
+
+            return wm;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void main(final String... args) throws Exception {
+        WineNameMatchCreater wnr = new WineNameMatchCreater();
+        wnr.readAndCreateMatches("C:\\Users\\amancheno\\Dropbox\\Master\\Proyecto\\wineNames.json.reduced");
+    }
 
 }
