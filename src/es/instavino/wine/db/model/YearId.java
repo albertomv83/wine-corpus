@@ -22,6 +22,10 @@ public class YearId {
 
     @JsonProperty("Id")
     private Long id;
+    
+    public YearId(){
+    	
+    }
 
     /**
      * @param year
