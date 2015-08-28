@@ -27,6 +27,8 @@ public class WineNameMatchCreater {
 
     private final ObjectMapper om = new ObjectMapper();
 
+    private Long sequenceIds = 1L;
+
     private final Set<String> matches = new TreeSet<String>();
 
     private final Set<List<String>> pairMatches =
@@ -105,7 +107,6 @@ public class WineNameMatchCreater {
 
     private AppellationMatch createAppellationMatch(final String line) {
         try {
-            // System.out.println(line);
             return om.readValue(line, AppellationMatch.class);
         } catch (IOException e) {
             e.printStackTrace();
@@ -138,16 +139,25 @@ public class WineNameMatchCreater {
             WineMatch wm = new WineMatch();
             wm.setList(wine.getList());
             wm.setName(wine.getName());
+            wm.setId(sequenceIds++);
             String name = wine.getName().trim().toLowerCase();
             name = name.replace(")", "");
             name = name.replace("(", "");
             name = name.replace("?", "");
             name = name.replace("¿", "");
             name = name.replace("!", "");
-            name = name.replace("!", "");
+            name = name.replace("¡", "");
+            name = name.replace("*", "");
             name = name.replace("' ", " ");
             name = name.replace(" '", " ");
             name = name.replace("'", " ");
+            name = name.replace("# ", " ");
+            name = name.replace(" #", " ");
+            name = name.replace("#", " ");
+            name = name.replace("'", " ");
+            name = name.replace("& ", " ");
+            name = name.replace(" &", " ");
+            name = name.replace("&", " ");
             name = name.replace("- ", " ");
             name = name.replace(" -", " ");
             name = name.replace("-", " ");
@@ -166,19 +176,45 @@ public class WineNameMatchCreater {
                     }
                 }
             }
-            wm.setMatches(goodMatches);
-            // create concatenated matches
-            // for (int i = 2; i <= goodMatches.size(); i++) {
-            List<String> partialResult =
-                    createConcatenatedMatches(2, goodMatches);
-            wm.getMatches().addAll(partialResult);
-            // }
+            wm.setMatches(new ArrayList<String>());
+            wm.getMatches().addAll(goodMatches);
+            wm.setPairMatches(new ArrayList<List<String>>());
+            // create concatenated and paired matches
+            for (int i = 2; i <= goodMatches.size(); i++) {
+                List<String> partialResult =
+                    createConcatenatedMatches(i, goodMatches);
+                wm.getMatches().addAll(partialResult);
+                List<List<String>> partialPairedResults =
+                    createPairedResults(i, goodMatches);
+                wm.getPairMatches().addAll(partialPairedResults);
+            }
 
             return wm;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * @param i
+     * @param goodMatches
+     * @return
+     */
+    private List<List<String>> createPairedResults(final int groups,
+            final List<String> goodMatches) {
+        List<List<String>> result = new ArrayList<List<String>>();
+        int position = 0;
+        List<String> sb = new ArrayList<String>();
+        while (position + groups <= goodMatches.size()) {
+            for (int i = 0; i <= groups - 1; i++) {
+                sb.add(goodMatches.get(position + i));
+            }
+            result.add(sb);
+            sb = new ArrayList<String>();
+            position++;
+        }
+        return result;
     }
 
     /**
@@ -203,6 +239,7 @@ public class WineNameMatchCreater {
     }
 
     public static void main(final String... args) throws Exception {
+
         WineNameMatchCreater wnr = new WineNameMatchCreater();
         wnr.readAndCreateMatches("C:\\Users\\amancheno\\Dropbox\\Master\\Proyecto\\wineNames.json.reduced");
     }

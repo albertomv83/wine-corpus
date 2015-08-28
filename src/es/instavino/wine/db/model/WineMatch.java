@@ -19,6 +19,9 @@ import org.codehaus.jackson.annotate.JsonProperty;
  */
 public class WineMatch extends WineNameReduced {
 
+    @JsonProperty("Id")
+    private Long id;
+
     @JsonProperty("Matches")
     private List<String> matches;
 
@@ -53,6 +56,21 @@ public class WineMatch extends WineNameReduced {
      */
     public void setPairMatches(final List<List<String>> pairMatches) {
         this.pairMatches = pairMatches;
+    }
+
+    /**
+     * @return Returns the id.
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * @param id
+     *            The id to set.
+     */
+    public void setId(final Long id) {
+        this.id = id;
     }
 
 }
