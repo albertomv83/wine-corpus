@@ -18,25 +18,45 @@ public class CorpusId {
     public enum CorpusType {
         WINE, APPELLATION, GRAPE
     };
+    
+    public enum CorpusPairType {
+        SIMPLE, PAIRED
+    };
 
     private Long id;
 
     private CorpusType corpusType;
+    
+    private CorpusPairType corpusPairType;
 
     public CorpusId() {
 
     }
+    
+    
 
-    /**
-     * @param id
-     * @param corpusType
-     */
-    public CorpusId(final Long id, final CorpusType corpusType) {
-        this.id = id;
-        this.corpusType = corpusType;
-    }
+    public CorpusId(Long id, CorpusType corpusType, CorpusPairType corpusPairType) {
+		super();
+		this.id = id;
+		this.corpusType = corpusType;
+		this.corpusPairType = corpusPairType;
+	}
 
-    /**
+
+
+	public CorpusPairType getCorpusPairType() {
+		return corpusPairType;
+	}
+
+
+
+	public void setCorpusPairType(CorpusPairType corpusPairType) {
+		this.corpusPairType = corpusPairType;
+	}
+
+
+
+	/**
      * @return Returns the id.
      */
     public Long getId() {

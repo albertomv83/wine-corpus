@@ -73,4 +73,11 @@ public class WineMatch extends WineNameReduced {
         this.id = id;
     }
 
+	@Override
+	public String toString() {
+		return "WineMatch [" + getName() + "]";
+	}
+    
+    
+
 }

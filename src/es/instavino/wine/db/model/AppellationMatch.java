@@ -91,4 +91,11 @@ public class AppellationMatch {
         this.pairMatches = pairMatches;
     }
 
+	@Override
+	public String toString() {
+		return "AppellationMatch [" + name + "]";
+	}
+    
+    
+
 }

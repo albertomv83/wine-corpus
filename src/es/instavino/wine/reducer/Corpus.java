@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import es.instavino.wine.db.model.AppellationMatch;
 import es.instavino.wine.db.model.CorpusId;
+import es.instavino.wine.db.model.CorpusId.CorpusPairType;
 import es.instavino.wine.db.model.CorpusId.CorpusType;
 import es.instavino.wine.db.model.GrapeMatch;
 import es.instavino.wine.db.model.WineMatch;
@@ -32,14 +34,18 @@ import es.instavino.wine.db.model.WineMatch;
 /**
  *
  */
-public class CorpusCreator {
+public class Corpus {
 
     private final ObjectMapper om = new ObjectMapper();
 
     private final Map<String, Set<CorpusId>> matches =
             new Hashtable<String, Set<CorpusId>>();
+    
+    private Map<Long,AppellationMatch> appellations;
+    private Map<Long,GrapeMatch> grapes;
+    private Map<Long,WineMatch> wines;
 
-    public void readAndCreateMatches(final String path) throws IOException {
+    public Map<String, Set<CorpusId>> readAndCreateMatches(final String path) throws IOException {
 
         List<AppellationMatch> appellations =
             Files
@@ -61,6 +67,10 @@ public class CorpusCreator {
                     Charset.forName("UTF-8"))
                 .map(line -> createWineMatch(line))
                 .collect(Collectors.toList());
+        
+        mapAppellations(appellations);
+        mapGrapes(grapes);
+        mapWines(wines);
 
         appellations
             .stream()
@@ -76,7 +86,7 @@ public class CorpusCreator {
                                 ids = new HashSet<CorpusId>();
                             }
                             ids.add(new CorpusId(appellation.getId(),
-                                CorpusType.APPELLATION));
+                                CorpusType.APPELLATION,CorpusPairType.SIMPLE));
                             matches.put(match, ids);
                         }));
 
@@ -97,7 +107,7 @@ public class CorpusCreator {
                                 }
                                 ids.add(new CorpusId(appellation
                                     .getId(),
-                                    CorpusType.APPELLATION));
+                                    CorpusType.APPELLATION,CorpusPairType.PAIRED));
                                 matches.put(match, ids);
                             });
                     });
@@ -117,7 +127,7 @@ public class CorpusCreator {
                                 ids = new HashSet<CorpusId>();
                             }
                             ids.add(new CorpusId(grape.getId(),
-                                CorpusType.GRAPE));
+                                CorpusType.GRAPE,CorpusPairType.SIMPLE));
                             matches.put(match, ids);
                         }));
 
@@ -138,7 +148,7 @@ public class CorpusCreator {
                                 }
                                 ids.add(new CorpusId(
                                             grape.getId(),
-                                    CorpusType.GRAPE));
+                                    CorpusType.GRAPE,CorpusPairType.PAIRED));
                                 matches.put(match, ids);
                             });
                     });
@@ -150,18 +160,74 @@ public class CorpusCreator {
             if (ids == null) {
                 ids = new HashSet<CorpusId>();
             }
-            ids.add(new CorpusId(wine.getId(), CorpusType.WINE));
+            ids.add(new CorpusId(wine.getId(), CorpusType.WINE,CorpusPairType.SIMPLE));
             matches.put(match, ids);
         }));
+        
+        wines
+        .stream()
+        .filter(wine -> wine.getPairMatches() != null)
+        .forEach(
+            wine -> {
+                wine.getPairMatches().forEach(
+                    sublist -> {
+                    sublist.stream()
+                    .forEach(
+                        match -> {
+                            Set<CorpusId> ids =
+                                    matches.get(match);
+                            if (ids == null) {
+                                ids = new HashSet<CorpusId>();
+                            }
+                            ids.add(new CorpusId(
+                                        wine.getId(),
+                                CorpusType.WINE,CorpusPairType.PAIRED));
+                            matches.put(match, ids);
+                        });
+                });
+            });
 
-        System.out.println(matches.size());
-        long timeBefore = System.currentTimeMillis();
-        Set<CorpusId> result = matches.get("santa");
-        System.out.println(System.currentTimeMillis() - timeBefore);
-        System.out.println(result);
+        
+        return matches;
     }
 
-    private AppellationMatch createAppellationMatch(final String line) {
+    private void mapAppellations(List<AppellationMatch> appellations) {
+		this.appellations = new HashMap<Long,AppellationMatch>();
+		for(AppellationMatch a:appellations){
+			this.appellations.put(a.getId(), a);
+		}
+	}
+
+    private void mapGrapes(List<GrapeMatch> grapes) {
+		this.grapes = new HashMap<Long,GrapeMatch>();
+		for(GrapeMatch a:grapes){
+			this.grapes.put(a.getId(), a);
+		}
+	}
+    
+
+
+    private void mapWines(List<WineMatch> wines) {
+		this.wines = new HashMap<Long,WineMatch>();
+		for(WineMatch a:wines){
+			this.wines.put(a.getId(), a);
+		}
+	}
+    
+    public WineMatch findWine(Long id){
+    	return this.wines.get(id);
+    }
+    
+    public AppellationMatch findAppellation(Long id){
+    	return this.appellations.get(id);
+    }
+    
+    public GrapeMatch findGrape(Long id){
+    	return this.grapes.get(id);
+    }
+
+
+	private AppellationMatch createAppellationMatch(final String line) {
         try {
             return om.readValue(line, AppellationMatch.class);
         } catch (IOException e) {
@@ -189,7 +255,8 @@ public class CorpusCreator {
     }
 
     public static void main(final String... args) throws IOException {
-        CorpusCreator cc = new CorpusCreator();
-        cc.readAndCreateMatches("C:\\Users\\amancheno\\Dropbox\\Master\\Proyecto\\corpus");
+        Corpus cc = new Corpus();
+        Map<String, Set<CorpusId>> corpus = cc.readAndCreateMatches("C:\\Users\\albertomv\\Dropbox\\Master\\Proyecto\\corpus");
+        System.out.println(corpus.get("white"));
     }
 }

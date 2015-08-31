@@ -91,4 +91,11 @@ public class GrapeMatch {
         this.pairMatches = pairMatches;
     }
 
+	@Override
+	public String toString() {
+		return "GrapeMatch [" + name + "]";
+	}
+    
+    
+
 }
