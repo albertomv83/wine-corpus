@@ -45,7 +45,7 @@ public class Corpus {
     private Map<Long,GrapeMatch> grapes;
     private Map<Long,WineMatch> wines;
 
-    public Map<String, Set<CorpusId>> readAndCreateMatches(final String path) throws IOException {
+    public void readAndCreateMatches(final String path) throws IOException {
 
         List<AppellationMatch> appellations =
             Files
@@ -186,12 +186,29 @@ public class Corpus {
                         });
                 });
             });
-
-        
-        return matches;
     }
+    
+    
+    
+    public WineMatch findWine(Long id){
+    	return this.wines.get(id);
+    }
+    
+    public AppellationMatch findAppellation(Long id){
+    	return this.appellations.get(id);
+    }
+    
+    public GrapeMatch findGrape(Long id){
+    	return this.grapes.get(id);
+    }    
+    
+    public Map<String, Set<CorpusId>> getMatches() {
+		return matches;
+	}
 
-    private void mapAppellations(List<AppellationMatch> appellations) {
+
+
+	private void mapAppellations(List<AppellationMatch> appellations) {
 		this.appellations = new HashMap<Long,AppellationMatch>();
 		for(AppellationMatch a:appellations){
 			this.appellations.put(a.getId(), a);
@@ -213,19 +230,6 @@ public class Corpus {
 			this.wines.put(a.getId(), a);
 		}
 	}
-    
-    public WineMatch findWine(Long id){
-    	return this.wines.get(id);
-    }
-    
-    public AppellationMatch findAppellation(Long id){
-    	return this.appellations.get(id);
-    }
-    
-    public GrapeMatch findGrape(Long id){
-    	return this.grapes.get(id);
-    }
-
 
 	private AppellationMatch createAppellationMatch(final String line) {
         try {
@@ -256,7 +260,8 @@ public class Corpus {
 
     public static void main(final String... args) throws IOException {
         Corpus cc = new Corpus();
-        Map<String, Set<CorpusId>> corpus = cc.readAndCreateMatches("C:\\Users\\albertomv\\Dropbox\\Master\\Proyecto\\corpus");
+        cc.readAndCreateMatches("C:\\Users\\albertomv\\Dropbox\\Master\\Proyecto\\corpus");
+        Map<String, Set<CorpusId>> corpus = cc.getMatches();
         System.out.println(corpus.get("white"));
     }
 }

@@ -50,34 +50,85 @@ public class CorpusInstagramMatch {
 	public boolean foundSomething() {
 		return wineSingle.size() > 0 || grapeSingle.size() > 0 || appellationSingle.size() > 0;
 	}
-
-	public String prettyPrint(Corpus corpus) {
-		StringBuffer sb = new StringBuffer();
-		sb.append("For Instagram: ").append(instagram.getLink()).append(" with text: ")
-				.append(instagram.getCaptionText()).append("\r\n");
-
-		if (wineSingle.size() > 0) {
-			for (CorpusSingleMatch match : wineSingle) {
-				sb.append("Found Wine: ").append(corpus.findWine(match.getCorpusTerm().getId())).append(" with term ")
-						.append(match.getTerm()).append(".\r\n");
-			}
-		}
-
+	
+	public StringBuffer toCSVAppellations(Corpus corpus) {
+		
+		StringBuffer finalSb = new StringBuffer();
+		
+		Set<Long> uniqueAppellations = new HashSet<Long>();		
 		if (appellationSingle.size() > 0) {
 			for (CorpusSingleMatch match : appellationSingle) {
-				sb.append("Found Appellation: ").append(corpus.findAppellation(match.getCorpusTerm().getId())).append(" with term ")
-						.append(match.getTerm()).append(".\r\n");
+				uniqueAppellations.add(match.getCorpusTerm().getId());
 			}
 		}
+		
+		for(Long appellationId:uniqueAppellations){
+			AppellationMatch match = corpus.findAppellation(appellationId);
+			StringBuffer sb = new StringBuffer();		
+			sb.append(match.getId()+",");
+			sb.append(match.getName()+",");
+			sb.append(instagram.getLink()+",");
+			sb.append(instagram.getUserProfilePictureURL()+",");
+			sb.append(instagram.getLocationLat()+",");
+			sb.append(instagram.getLocationLon()+",");
+			sb.append(instagram.getCreatedTime()+",");
+			sb.append(instagram.getLikesCount());
+			//System.out.println(sb.toString());
+			finalSb.append(sb.toString()).append(System.lineSeparator());
+		}
+		return finalSb;
+	}
+	
 
+	
+	public StringBuffer toCSVGrapes(Corpus corpus) {
+		StringBuffer finalSb = new StringBuffer();
+		Set<Long> uniqueGrapes = new HashSet<Long>();		
 		if (grapeSingle.size() > 0) {
 			for (CorpusSingleMatch match : grapeSingle) {
-				sb.append("Found Grape: ").append(corpus.findGrape(match.getCorpusTerm().getId())).append(" with term ")
-						.append(match.getTerm()).append(".\r\n");
+				uniqueGrapes.add(match.getCorpusTerm().getId());
 			}
 		}
-
-		return sb.toString();
+		
+		for(Long grapeId:uniqueGrapes){
+			GrapeMatch match = corpus.findGrape(grapeId);
+			StringBuffer sb = new StringBuffer();		
+			sb.append(match.getId()+",");
+			sb.append(match.getName()+",");
+			sb.append(instagram.getLink()+",");
+			sb.append(instagram.getUserProfilePictureURL()+",");
+			sb.append(instagram.getLocationLat()+",");
+			sb.append(instagram.getLocationLon()+",");
+			sb.append(instagram.getCreatedTime()+",");
+			sb.append(instagram.getLikesCount());
+			finalSb.append(sb.toString()).append(System.lineSeparator());
+		}
+		return finalSb;
+	}
+	
+	public StringBuffer toCSVWines(Corpus corpus) {
+		StringBuffer finalSb = new StringBuffer();
+		Set<Long> uniqueWines = new HashSet<Long>();		
+		if (wineSingle.size() > 0) {
+			for (CorpusSingleMatch match : wineSingle) {
+				uniqueWines.add(match.getCorpusTerm().getId());
+			}
+		}
+		
+		for(Long wineId:uniqueWines){
+			WineMatch match = corpus.findWine(wineId);
+			StringBuffer sb = new StringBuffer();		
+			sb.append(match.getId()+",");
+			sb.append(match.getName()+",");
+			sb.append(instagram.getLink()+",");
+			sb.append(instagram.getUserProfilePictureURL()+",");
+			sb.append(instagram.getLocationLat()+",");
+			sb.append(instagram.getLocationLon()+",");
+			sb.append(instagram.getCreatedTime()+",");
+			sb.append(instagram.getLikesCount());
+			finalSb.append(sb.toString()).append(System.lineSeparator());
+		}
+		return finalSb;
 	}
 
 	public void removeTerm(String term, CorpusType type) {
